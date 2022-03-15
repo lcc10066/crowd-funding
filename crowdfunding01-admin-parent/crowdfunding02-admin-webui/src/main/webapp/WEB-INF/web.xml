@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+<!--先加载listener  再加载 filter   最后加载servlet  -->
+
+
+
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:spring-persist-*.xml</param-value>
+    </context-param>
+    <!--
+      监听器:监听事务变化,然后通过回调函数,反馈给客户一些处理
+            最常用的监听器接口之一:ServletContextListener  监控ServletContext对象的创建和销毁
+                ContextLoaderListener （extends ContextLoader implements ServletContextListener ）
+                ContextLoaderListener内部实现了对spring的加载，
+                即：一旦web容器创建（ServletContext创建），就加载spring的配置文件，创建spring的IOC容器（包含了spring、spring-mybatis整合）
+      -->
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+
+<!--  filter 之首  -->
+    <filter>
+        <filter-name>CharacterEncodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+        <init-param>
+            <param-name>forceRequestEncoding</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <init-param>
+            <param-name>forceResponseEncoding</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>CharacterEncodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+<!--  RESTFUL编程风格 filter -->
+<!--    略   -->
+
+    <filter>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+
+
+
+<!--   spring-MVC -->
+    <servlet>
+        <servlet-name>DispatcherServlet</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:spring-web-mvc.xml</param-value>
+        </init-param>
+<!--    servlet的生命周期中，创建对象是在第一次接受到请求才创建的，其中要结果诸多的初始化操作：
+            如：查看当前是否存在IOC容器，若存在，则创建新的IOC容器为已存在的IOC容器的子容器，不存在则新创建的IOC容器为Root容器，加载MVC配置文件
+            该操作需要耗费较多时间，所以应当设置为服务器启动时就创建该servlet  load-on-startup 1
+  -->
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DispatcherServlet</servlet-name>
+        <!--  第一种配置方式： 表示拦截所有请求
+                  缺点： 当所要访问的资源没有可匹配的controller时会直接返回404，
+                  需要配置<mvc:default-servlet-handler/>（），才会再去检查是否有对应的静态资源.jsp  .html  .css .jpg等 若没有 才返回404
+          -->
+<!--        <url-pattern>/</url-pattern>-->
+
+        <!--        第二种配置方式： 配置请求扩展名
+                        优点： 伪静态
+                              对静态资源的访问（.css,.js,.png）不再经过spring-MVC，不需要特殊处理
+                              有利于SEO优化
+                        缺点： 不符合restful风格
+        -->
+        <url-pattern>*.html</url-pattern>
+        <!-- 如果一个Ajax请求扩展名是html,但是实际服务器给浏览器返回的是json数据,二者就不匹配了，就会出现406错误。 -->
+<!--        其他错误类型 200 正常  、302 。。。。    400 请求参数不匹配    404.。。。-->
+        <!-- 为了让Ajax请求能够顺利拿到json格式的响应数据，我们另外配置json扩展名 -->
+        <url-pattern>*.json</url-pattern>
+    </servlet-mapping>
+
+
+</web-app>

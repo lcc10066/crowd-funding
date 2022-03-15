@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+
+    <context:component-scan base-package="com.crowd.service"></context:component-scan>
+
+<!--  事务管理器  -->
+    <bean id="dataSourceTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!--装配数据源： 现在有警告无妨，等待配置文件都加载入IOC容器后，会获取到该ref     -->
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+<!--  配置AOP  -->
+    <aop:config>
+<!--        切入点表达式-->
+        <aop:pointcut id="txPoint" expression="execution(* *..*ServiceImpl.*(..))"/>
+<!--        将事务通知和切入点表达式关联-->
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPoint"/>
+    </aop:config>
+
+<!--    配置事务通知-->
+    <tx:advice id="txAdvice" transaction-manager="dataSourceTransactionManager">
+        <tx:attributes>
+            <!-- name 属性指定当前要配置的事务方法的方法名 -->
+            <!-- 查询的方法通常设置为只读，便于数据库根据只读属性进行相关性能优化 -->
+            <tx:method name="get*" read-only="true" />
+            <tx:method name="query*" read-only="true" />
+            <tx:method name="find*" read-only="true" />
+            <tx:method name="count*" read-only="true" />
+
+            <!-- 增删改方法另外配置 -->
+            <!-- propagation 属性配置事务方法的传播行为 -->
+            <!-- 默认值：REQUIRED 表示：当前方法必须运行在事务中，如果没有事务，则开启事务，在自己的事务中运行。如果已经有了已开启的事务，则在当前事务中运行。有可能和其他方法共用同一个事务。
+                                    存在的问题： 本方法没有出现异常，但可能被同一事务中的代码异常导致回滚 -->
+            <!-- 建议值：REQUIRES_NEW 表示：当前方法必须运行在事务中，如果没有事务， 则开启事务，在自己的事务中运行。和 REQUIRED 的区别是就算现在已经有了已开启的事务， 也一定要开启自己的事务，避免和其他方法共用同一个事务。 -->
+            <!-- rollback-for 属性配置回滚的异常 -->
+            <!-- 默认值：运行时异常 -->
+            <!-- 建议值：编译时异常+运行时异常 -->
+            <tx:method name="save*" propagation="REQUIRES_NEW" rollback-for="java.lang.Exception" />
+            <tx:method name="remove*" propagation="REQUIRES_NEW" rollback-for="java.lang.Exception" />
+            <tx:method name="update*" propagation="REQUIRES_NEW" rollback-for="java.lang.Exception" />
+            <tx:method name="batch*" propagation="REQUIRES_NEW" rollback-for="java.lang.Exception" />
+        </tx:attributes>
+    </tx:advice>
+
+
+<!--  装到子容器中无法正常被service调用，所以此处将盐值加密装配至父容器  -->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+</beans>

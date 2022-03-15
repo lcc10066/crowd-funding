@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+<!--
+  有关名称空间的解释：
+  https://blog.csdn.net/zhushuai1221/article/details/53634265
+-->
+
+    <context:property-placeholder location="classpath:jdbc.properties"></context:property-placeholder>
+
+    <!--    数据源-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <!-- 连接数据库的用户名 -->
+        <property name="username" value="${jdbc.user}"/>
+        <!-- 连接数据库的密码 -->
+        <property name="password" value="${jdbc.password}"/>
+        <!-- 目标数据库的 URL 地址 -->
+        <property name="url" value="${jdbc.jdbcUrl}"/>
+        <!-- 数据库驱动全类名 -->
+        <property name="driverClassName" value="${jdbc.driverClass}"/>
+    </bean>
+
+
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"></property>
+        <property name="configLocation" value="classpath:mybatis/mybatis-config.xml"></property>
+        <property name="mapperLocations" value="classpath:mybatis/mapper/*Mapper.xml"></property>
+
+<!--  SqlSessionFactoryBean中  Interceptor[] plugins
+    ****************************mybatis中的拦截器****************************
+ -->
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageHelper">
+                    <property name="properties">
+                        <props>
+<!--                          告诉PageHelper当前使用的数据库类型  -->
+                            <prop key="dialect">mysql</prop>
+<!--                           配置页码合理化修正，可青请求页码总在 1 — 总页码 之间  -->
+                            <prop key="reasonable">true</prop>
+                        </props>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.crowd.mapper"></property>
+    </bean>
+
+
+
+</beans>

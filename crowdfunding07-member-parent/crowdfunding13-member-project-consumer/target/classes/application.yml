@@ -1,0 +1,27 @@
+server:
+  port: 5000
+spring:
+  application:
+    name: crowd-project
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+  redis:
+    host: 127.0.0.1
+  session:
+    store-type: redis
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:1000/eureka
+aliyun:
+  oss:
+    access-key-id: LTAI5tL1PaxuauPPdZU4QiFK
+    access-key-secret: C1W79Ytf2HTkXbS75sABfk7cG0j9Nl
+    bucket-domain: http://crowd-for-lcc.oss-cn-shanghai.aliyuncs.com
+    bucket-name: crowd-for-lcc
+    end-point: http://oss-cn-shanghai.aliyuncs.com
+
+ribbon:
+  ReadTimeout: 10000
+  ConnectTimeout: 10000
